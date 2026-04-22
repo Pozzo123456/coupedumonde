@@ -606,24 +606,32 @@ function renderPronostics(){
 }
 
 const _debounce={};
-async function saveProno(mid, field, val){
-  if(!me) return;
-
-  let existing = (state.pronostics[me] || {})[mid] || {};
-  existing[field] = val === '' ? null : parseInt(val);
+async function saveProno(mid, field, val) {
+  if (!me) return;
 
   state.pronostics[me] = state.pronostics[me] || {};
-  state.pronostics[me][mid] = existing;
+  state.pronostics[me][mid] = state.pronostics[me][mid] || { scoreA: null, scoreB: null, result: null };
+  state.pronostics[me][mid][field] = val === '' ? null : parseInt(val);
+  
+  const p = state.pronostics[me][mid];
 
-  await supabase.from('pronostics').upsert({
-    user_name: me,
-    match_id: mid,
-    scoreA: existing.scoreA ?? null,
-    scoreB: existing.scoreB ?? null,
-    result: existing.result ?? null
-  });
+  const { error } = await supabase
+    .from('pronostics')
+    .upsert({
+      user_name: me,
+      match_id: mid,
+      scoreA: p.scoreA,
+      scoreB: p.scoreB,
+      result: p.result
+    }, { onConflict: 'user_name, match_id' });
 
-  toast("Pronostic enregistré !");
+  if (error) {
+    console.error("Erreur:", error);
+    toast("Erreur sauvegarde", "error");
+  } else {
+    ls_save();
+    toast("Pronostic enregistré !");
+  }
 }
 function pickResult(mid,result,btn){
   if(!state.pronostics[me]) state.pronostics[me]={};
