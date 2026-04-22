@@ -917,8 +917,6 @@ async function loadResultats() {
   }
 }
 async function resetAll() {
-  if (!confirm('⚠️ ATTENTION : Supprimer toutes les données ?')) return;
-
   try {
     await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
     await supabase.from('users').delete().neq('name', 'impossible_value');
