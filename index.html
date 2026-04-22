@@ -606,24 +606,35 @@ function renderPronostics(){
 }
 
 const _debounce={};
-async function saveProno(mid, field, val){
-  if(!me) return;
+async function saveProno(mid, field, val) {
+  if (!me) return;
 
-  let existing = (state.pronostics[me] || {})[mid] || {};
-  existing[field] = val === '' ? null : parseInt(val);
+  // 1. Mettre à jour l'état local
+  if (!state.pronostics[me]) state.pronostics[me] = {};
+  if (!state.pronostics[me][mid]) state.pronostics[me][mid] = { scoreA: null, scoreB: null, result: null };
+  
+  state.pronostics[me][mid][field] = val === '' ? null : parseInt(val);
 
-  state.pronostics[me] = state.pronostics[me] || {};
-  state.pronostics[me][mid] = existing;
+  // 2. Préparer l'objet complet pour l'upsert
+  const prono = state.pronostics[me][mid];
+  
+  const { error } = await supabase
+    .from('pronostics')
+    .upsert({
+      user_name: me,
+      match_id: mid,
+      scoreA: prono.scoreA,
+      scoreB: prono.scoreB,
+      result: prono.result
+    }, { onConflict: 'user_name, match_id' }); // <--- IMPORTANT : spécifier les colonnes de conflit
 
-  await supabase.from('pronostics').upsert({
-    user_name: me,
-    match_id: mid,
-    scoreA: existing.scoreA ?? null,
-    scoreB: existing.scoreB ?? null,
-    result: existing.result ?? null
-  });
-
-  toast("Pronostic enregistré !");
+  if (error) {
+    console.error("Erreur saveProno:", error);
+    toast("Erreur de sauvegarde", "error");
+  } else {
+    ls_save();
+    toast("Pronostic enregistré !");
+  }
 }
 function pickResult(mid,result,btn){
   if(!state.pronostics[me]) state.pronostics[me]={};
