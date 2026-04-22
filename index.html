@@ -915,6 +915,7 @@ async function resetAll() {
   try {
     await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
     await supabase.from('users').delete().neq('name', 'impossible_value');
+    await supabase.from('resultats').delete().neq('scoreA', 'impossible_value');
 
     state = { participants: [], matchs: [], pronostics: {}, parcours: {}, resultats: {} };
     ls_save();
