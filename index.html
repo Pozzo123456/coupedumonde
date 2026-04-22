@@ -866,23 +866,27 @@ async function toggleClose(id, closed) {
   await loadAllData();
   renderAdmin();
 }
-async function saveResultManual(id) {
-  const valA = document.getElementById(`resA-${id}`).value;
-  const valB = document.getElementById(`resB-${id}`).value;
+async function saveResultManual(mid) {
+    const valA = document.getElementById(`admin-scoreA-${mid}`).value;
+    const valB = document.getElementById(`admin-scoreB-${mid}`).value;
 
-  const { error } = await supabase
-    .from('resultats')
-    .upsert({
-      match_id: id,
-      scoreA: valA === '' ? null : parseInt(valA),
-      scoreB: valB === '' ? null : parseInt(valB)
-    }, { onConflict: 'match_id' });
+    const payload = {
+        match_id: mid,
+        scoreA: valA === '' ? null : parseInt(valA),
+        scoreB: valB === '' ? null : parseInt(valB)
+    };
 
-  if (error) {
-    toast("Erreur sauvegarde résultat", "error");
-  } else {
-    toast("Score officiel enregistré !");
-  }
+    const { error } = await supabase
+        .from('resultats')
+        .upsert(payload, { onConflict: 'match_id' });
+
+    if (error) {
+        console.error("Erreur admin:", error);
+        alert("Erreur lors de la sauvegarde : " + error.message);
+    } else {
+        alert("Résultat validé et enregistré !");
+        loadAllData();
+    }
 }
 async function loadResultats() {
   const { data, error } = await supabase.from('resultats').select('*');
