@@ -870,12 +870,13 @@ async function toggleClose(id, closed) {
   renderAdmin();
 }
 async function saveResult(id, field, val) {
-  if (!state.resultats[id]) state.resultats[id] = {};
+  if (!state.resultats[id]) state.resultats[id] = { scoreA: null, scoreB: null };
   state.resultats[id][field] = val === '' ? null : parseInt(val);
   
   const payload = {
     match_id: id,
-    [field]: val === '' ? null : parseInt(val)
+    scoreA: state.resultats[id].scoreA,
+    scoreB: state.resultats[id].scoreB
   };
 
   const { error } = await supabase
