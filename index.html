@@ -862,12 +862,16 @@ async function toggleClose(id, closed) {
   renderAdmin();
 }
 async function saveResult(id, field, val) {
-  if (!state.resultats[id]) state.resultats[id] = {};
-  state.resultats[id][field] = val === '' ? null : parseInt(val);
+
+  if (!state.resultats[id]) state.resultats[id] = { scoreA: null, scoreB: null };
+  
+  const numericVal = val === '' ? null : parseInt(val);
+  state.resultats[id][field] = numericVal;
   
   const payload = {
     match_id: id,
-    [field]: val === '' ? null : parseInt(val)
+    scoreA: state.resultats[id].scoreA,
+    scoreB: state.resultats[id].scoreB
   };
 
   const { error } = await supabase
@@ -881,7 +885,7 @@ async function saveResult(id, field, val) {
   }
 
   ls_save();
-  toast('Score enregistré dans la base !');
+  toast('Score enregistré !');
 }
 async function loadResultats() {
   const { data, error } = await supabase.from('resultats').select('*');
