@@ -610,14 +610,16 @@ async function saveProno(mid, field, val) {
   if (!me) return;
 
   // 1. Mettre à jour l'état local
-  if (!state.pronostics[me]) state.pronostics[me] = {};
-  if (!state.pronostics[me][mid]) state.pronostics[me][mid] = { scoreA: null, scoreB: null, result: null };
+  state.pronostics[me] = state.pronostics[me] || {};
+  state.pronostics[me][mid] = state.pronostics[me][mid] || { scoreA: null, scoreB: null, result: null };
   
+  // Appliquer la nouvelle valeur dans le state local
   state.pronostics[me][mid][field] = val === '' ? null : parseInt(val);
-
-  // 2. Préparer l'objet complet pour l'upsert
-  const prono = state.pronostics[me][mid];
   
+  // 2. Préparer l'objet complet avec les deux scores
+  const prono = state.pronostics[me][mid];
+
+  // 3. Envoi à Supabase en incluant TOUS les champs nécessaires
   const { error } = await supabase
     .from('pronostics')
     .upsert({
@@ -626,7 +628,7 @@ async function saveProno(mid, field, val) {
       scoreA: prono.scoreA,
       scoreB: prono.scoreB,
       result: prono.result
-    }, { onConflict: 'user_name, match_id' }); // <--- IMPORTANT : spécifier les colonnes de conflit
+    }, { onConflict: 'user_name, match_id' }); // Important : nécessite la contrainte unique
 
   if (error) {
     console.error("Erreur saveProno:", error);
