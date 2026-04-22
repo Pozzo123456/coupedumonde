@@ -587,13 +587,11 @@ function renderPronostics(){
         </div>
         <div class="teams-row">
           <span class="team-name">${m.teamA}</span>
-          <div class="score-pair" id="container-${m.id}">
-          <input class="score-input" type="number" id="scoreA-${m.id}" value="${sA || ''}" placeholder="–">
-          <span class="score-sep">–</span>
-          <input class="score-input" type="number" id="scoreB-${m.id}" value="${sB || ''}" placeholder="–">
-    
-          <button class="btn-valider" onclick="savePronoManual('${m.id}')">OK</button>
-        </div>
+          <div class="score-pair">
+            <input class="score-input" type="number" min="0" max="30" value="${sA}" placeholder="–" oninput="saveProno('${m.id}','scoreA',this.value)"/>
+            <span class="score-sep">–</span>
+            <input class="score-input" type="number" min="0" max="30" value="${sB}" placeholder="–" oninput="saveProno('${m.id}','scoreB',this.value)"/>
+          </div>
           <span class="team-name right">${m.teamB}</span>
         </div>
         <div class="result-btns">
@@ -608,26 +606,31 @@ function renderPronostics(){
 }
 
 const _debounce={};
-async function savePronoManual(mid) {
-  const scoreA = document.getElementById(`scoreA-${mid}`).value;
-  const scoreB = document.getElementById(`scoreB-${mid}`).value;
+async function saveProno(mid, field, val) {
+  if (!me) return;
 
-  const payload = {
-    user_name: me,
-    match_id: mid,
-    scoreA: scoreA === '' ? null : parseInt(scoreA),
-    scoreB: scoreB === '' ? null : parseInt(scoreB)
-  };
+  state.pronostics[me] = state.pronostics[me] || {};
+  state.pronostics[me][mid] = state.pronostics[me][mid] || { scoreA: null, scoreB: null, result: null };
+  state.pronostics[me][mid][field] = val === '' ? null : parseInt(val);
+  
+  const p = state.pronostics[me][mid];
 
   const { error } = await supabase
     .from('pronostics')
-    .upsert(payload, { onConflict: 'user_name, match_id' });
+    .upsert({
+      user_name: me,
+      match_id: mid,
+      scoreA: p.scoreA,
+      scoreB: p.scoreB,
+      result: p.result
+    }, { onConflict: 'user_name, match_id' });
 
   if (error) {
-    toast("Erreur : " + error.message, "error");
+    console.error("Erreur:", error);
+    toast("Erreur sauvegarde", "error");
   } else {
-    toast("Pronostic validé !");
-    loadPronostics();
+    ls_save();
+    toast("Pronostic enregistré !");
   }
 }
 function pickResult(mid,result,btn){
@@ -759,16 +762,21 @@ function renderAdmin(){
     :'<p style="font-size:13px;color:var(--mid)">Aucun participant.</p>';
 
   if(!state.matchs.length){document.getElementById('admin-results').innerHTML='<p style="color:var(--mid);font-size:13px">Aucun match.</p>';return;}
-  document.getElementById('admin-results').innerHTML = state.matchs.map(m => {
-      const r = (state.resultats && state.resultats[m.id]) || { scoreA: '', scoreB: '' };
-    
-      return `
-      <div class="admin-match-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
-          <span>${m.teamA} vs ${m.teamB}</span>
-          <input type="number" id="admin-scoreA-${m.id}" value="${r.scoreA ?? ''}" placeholder="A">
-          <input type="number" id="admin-scoreB-${m.id}" value="${r.scoreB ?? ''}" placeholder="B">
-          <button onclick="saveResultManual('${m.id}')">Valider</button>
-      </div>`;
+  document.getElementById('admin-results').innerHTML=state.matchs.map(m=>{
+    const r = (state.resultats && state.resultats[m.id]) || {};
+    return `<div class="result-row">
+      <div class="rt-teams">
+        <strong>${m.teamA} — ${m.teamB}</strong>
+        <span>${PHASE_LABELS[m.phase]||m.phase}${m.date?' · '+m.date:''}${m.group?' · Groupe '+m.group:''}</span>
+      </div>
+      <div class="rt-score">
+        <input type="number" min="0" placeholder="–" value="${r.scoreA!==undefined?r.scoreA:''}" onchange="saveResult('${m.id}','scoreA',this.value)"/>
+        <span style="font-weight:800;color:var(--mid)">–</span>
+        <input type="number" min="0" placeholder="–" value="${r.scoreB!==undefined?r.scoreB:''}" onchange="saveResult('${m.id}','scoreB',this.value)"/>
+      </div>
+      <label class="rt-close"><input type="checkbox" ${m.closed?'checked':''} onchange="toggleClose('${m.id}',this.checked)"/> Fermé</label>
+      <button class="btn btn-sm btn-danger" onclick="delMatch('${m.id}')">Supprimer</button>
+    </div>`;
   }).join('');
 }
 
@@ -861,27 +869,27 @@ async function toggleClose(id, closed) {
   await loadAllData();
   renderAdmin();
 }
-async function saveResultManual(mid) {
-    const valA = document.getElementById(`admin-scoreA-${mid}`).value;
-    const valB = document.getElementById(`admin-scoreB-${mid}`).value;
+async function saveResult(id, field, val) {
+  if (!state.resultats[id]) state.resultats[id] = {};
+  state.resultats[id][field] = val === '' ? null : parseInt(val);
+  
+  const payload = {
+    match_id: id,
+    [field]: val === '' ? null : parseInt(val)
+  };
 
-    const payload = {
-        match_id: mid,
-        scoreA: valA === '' ? null : parseInt(valA),
-        scoreB: valB === '' ? null : parseInt(valB)
-    };
+  const { error } = await supabase
+    .from('resultats')
+    .upsert(payload, { onConflict: 'match_id' });
 
-    const { error } = await supabase
-        .from('resultats')
-        .upsert(payload, { onConflict: 'match_id' });
+  if (error) {
+    console.error("Erreur enregistrement score:", error);
+    toast("Erreur sauvegarde résultat", "error");
+    return;
+  }
 
-    if (error) {
-        console.error("Erreur admin:", error);
-        alert("Erreur lors de la sauvegarde : " + error.message);
-    } else {
-        alert("Résultat validé et enregistré !");
-        loadAllData();
-    }
+  ls_save();
+  toast('Score enregistré dans la base !');
 }
 async function loadResultats() {
   const { data, error } = await supabase.from('resultats').select('*');
