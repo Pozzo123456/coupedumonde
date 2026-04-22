@@ -952,11 +952,20 @@ async function loadPronostics(){
   });
 }
 supabase
-  .channel('realtime-pronostics')
-  .on('postgres_changes',
-    { event: '*', schema: 'public', table: 'pronostics' },
-    () => loadAllData()
-  )
+  .channel('public-changes')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics' }, () => {
+    loadPronostics();
+    renderPronostics(); // Mise à jour auto des pronostics si nécessaire
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'matchs' }, () => {
+    loadAllData(); // Recharger tout car la structure des matchs change
+    toast('Mise à jour des matchs effectuée !', 'info');
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'resultats' }, () => {
+    loadResultats();
+    renderMatchs();    // Mise à jour de la vue matchs (résultats/stats)
+    renderClassement(); // Mise à jour du classement si les points changent
+  })
   .subscribe();
 async function loadAllData() {
   await Promise.all([
