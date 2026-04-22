@@ -759,21 +759,16 @@ function renderAdmin(){
     :'<p style="font-size:13px;color:var(--mid)">Aucun participant.</p>';
 
   if(!state.matchs.length){document.getElementById('admin-results').innerHTML='<p style="color:var(--mid);font-size:13px">Aucun match.</p>';return;}
-  document.getElementById('admin-results').innerHTML=state.matchs.map(m=>{
-    const r = (state.resultats && state.resultats[m.id]) || {};
-    return `<div class="result-row">
-      <div class="rt-teams">
-        <strong>${m.teamA} — ${m.teamB}</strong>
-        <span>${PHASE_LABELS[m.phase]||m.phase}${m.date?' · '+m.date:''}${m.group?' · Groupe '+m.group:''}</span>
-      </div>
-      <div class="rt-score">
-        <input type="number" min="0" placeholder="–" value="${r.scoreA!==undefined?r.scoreA:''}" onchange="saveResult('${m.id}','scoreA',this.value)"/>
-        <span style="font-weight:800;color:var(--mid)">–</span>
-        <input type="number" min="0" placeholder="–" value="${r.scoreB!==undefined?r.scoreB:''}" onchange="saveResult('${m.id}','scoreB',this.value)"/>
-      </div>
-      <label class="rt-close"><input type="checkbox" ${m.closed?'checked':''} onchange="toggleClose('${m.id}',this.checked)"/> Fermé</label>
-      <button class="btn btn-sm btn-danger" onclick="delMatch('${m.id}')">Supprimer</button>
-    </div>`;
+  document.getElementById('admin-results').innerHTML = state.matchs.map(m => {
+      const r = (state.resultats && state.resultats[m.id]) || { scoreA: '', scoreB: '' };
+    
+      return `
+      <div class="admin-match-row" style="display: flex; gap: 10px; margin-bottom: 10px;">
+          <span>${m.teamA} vs ${m.teamB}</span>
+          <input type="number" id="admin-scoreA-${m.id}" value="${r.scoreA ?? ''}" placeholder="A">
+          <input type="number" id="admin-scoreB-${m.id}" value="${r.scoreB ?? ''}" placeholder="B">
+          <button onclick="saveResultManual('${m.id}')">Valider</button>
+      </div>`;
   }).join('');
 }
 
@@ -866,27 +861,27 @@ async function toggleClose(id, closed) {
   await loadAllData();
   renderAdmin();
 }
-async function saveResult(id, field, val) {
-  if (!state.resultats[id]) state.resultats[id] = {};
-  state.resultats[id][field] = val === '' ? null : parseInt(val);
-  
-  const payload = {
-    match_id: id,
-    [field]: val === '' ? null : parseInt(val)
-  };
+async function saveResultManual(mid) {
+    const valA = document.getElementById(`admin-scoreA-${mid}`).value;
+    const valB = document.getElementById(`admin-scoreB-${mid}`).value;
 
-  const { error } = await supabase
-    .from('resultats')
-    .upsert(payload, { onConflict: 'match_id' });
+    const payload = {
+        match_id: mid,
+        scoreA: valA === '' ? null : parseInt(valA),
+        scoreB: valB === '' ? null : parseInt(valB)
+    };
 
-  if (error) {
-    console.error("Erreur enregistrement score:", error);
-    toast("Erreur sauvegarde résultat", "error");
-    return;
-  }
+    const { error } = await supabase
+        .from('resultats')
+        .upsert(payload, { onConflict: 'match_id' });
 
-  ls_save();
-  toast('Score enregistré dans la base !');
+    if (error) {
+        console.error("Erreur admin:", error);
+        alert("Erreur lors de la sauvegarde : " + error.message);
+    } else {
+        alert("Résultat validé et enregistré !");
+        loadAllData();
+    }
 }
 async function loadResultats() {
   const { data, error } = await supabase.from('resultats').select('*');
