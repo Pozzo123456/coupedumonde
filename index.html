@@ -932,6 +932,7 @@ async function resetAll() {
       event: 'force-reload',
       payload: { message: 'Les données ont été réinitialisées par l\'admin.' }
     });
+    
 
     state = {
       participants: [adminName],
@@ -983,23 +984,21 @@ async function loadPronostics(){
 }
 supabase
   .channel('global-sync')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'matchs' }, () => {
-    loadAllData();
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'matchs' }, () => { loadAllData(); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'resultats' }, () => { 
+      loadResultats().then(() => { renderMatchs(); renderClassement(); }); 
   })
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'resultats' }, () => {
-    loadResultats().then(() => {
-        renderMatchs();
-        renderClassement();
-    });
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics' }, () => { 
+      loadPronostics().then(() => { renderPronostics(); renderClassement(); }); 
   })
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics' }, () => {
-    loadPronostics().then(() => {
-        renderPronostics();
-        renderClassement();
-    });
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => { 
+      loadUsers().then(() => renderAdmin()); 
   })
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-    loadUsers().then(() => renderAdmin());
+  .on('broadcast', { event: 'force-reload' }, (payload) => {
+      if (me !== 'Kévin DROUET') {
+          console.log("Réinitialisation reçue :", payload.payload.message);
+          location.reload();
+      }
   })
   .subscribe();
   async function loadParcours() {
