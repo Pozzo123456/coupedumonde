@@ -1114,8 +1114,16 @@ supabase
   .on('postgres_changes', { event: '*', schema: 'public', table: 'resultats' }, () => { 
       loadResultats().then(() => { renderMatchs(); renderClassement(); }); 
   })
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'parcours' }, () => { 
-      loadParcours().then(() => { renderParcours(); }); 
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'parcours' }, async () => {
+      await loadParcours();
+      
+      if (document.getElementById('section-parcours').classList.contains('visible')) {
+          renderParcours();
+      }
+      
+      if (document.getElementById('section-admin').classList.contains('visible')) {
+          renderAdmin();
+      }
   })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics' }, () => { 
       loadPronostics().then(() => { renderPronostics(); renderClassement(); }); 
