@@ -918,23 +918,30 @@ async function loadResultats() {
 }
 async function resetAll() {
   try {
-    await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
-    await supabase.from('users').delete().neq('name', 'Kévin DROUET');
-    await supabase.from('parcours').delete().neq('users_name', 'impossible_value');
-    await supabase.from('resultats').delete().neq('scoreA', 'impossible_value');
-    await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
+    const adminName = 'Kévin DROUET';
 
-    state.pronostics = { [me]: state.pronostics[me] || {} };
-    state.parcours = { [me]: state.parcours[me] || {} };
-    state.resultats = {};
-    state.matchs = [];
+    await supabase.from('pronostics').delete().not('user_name', 'eq', adminName);
+    await supabase.from('parcours').delete().not('user_name', 'eq', adminName);
+    await supabase.from('users').delete().not('name', 'eq', adminName);
+
+    await supabase.from('resultats').delete().not('match_id', 'is', null);
+    await supabase.from('matchs').delete().not('id', 'is', null);
+
+    state = {
+      participants: [adminName],
+      matchs: [],
+      pronostics: { [adminName]: state.pronostics[adminName] || {} },
+      parcours: { [adminName]: state.parcours[adminName] || {} },
+      resultats: {}
+    };
+
     ls_save();
+    
     renderAdmin();
     renderPronostics();
     renderClassement();
-    renderMatchs();
     
-    toast('Données réinitialisées.', 'success');
+    toast('Réinitialisation terminée. Vous êtes le seul participant restant.', 'success');
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
