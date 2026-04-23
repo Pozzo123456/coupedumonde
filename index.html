@@ -576,8 +576,10 @@ function renderPronostics(){
   }
 
   const sortedMatchs = [...state.matchs].sort((a, b) => {
-    if (a.closed !== b.closed) return a.closed - b.closed;
-    return 0; 
+  const dateA = a.date ? new Date(a.date.split('/').reverse().join('-')) : new Date(0);
+  const dateB = b.date ? new Date(b.date.split('/').reverse().join('-')) : new Date(0);
+  
+  return dateB - dateA;
   });
 
   let html = '';
