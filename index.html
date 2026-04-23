@@ -920,15 +920,14 @@ async function loadResultats() {
     });
   }
 }
-async function resetmatchs() {
+async function resetparcours() {
   try {
-    await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
+    await supabase.from('parcours').delete().neq('user_name', me);
 
-    state = {matchs: []};
+    state.parcours = {}; 
     ls_save();
     
-    toast('Données réinitialisées.', 'success');
-    location.reload(); 
+    toast('Parcours réinitialisés.', 'success');
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -936,27 +935,27 @@ async function resetmatchs() {
 }
 async function resetprono() {
   try {
-    await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
+    await supabase.from('pronostics').delete().neq('user_name', me);
 
-    state = { participants: {}, matchs: {}, pronostics: [], parcours: {}, resultats: {} };
+    state.pronostics = {};
     ls_save();
     
-    toast('Données réinitialisées.', 'success');
-    location.reload(); 
+    toast('Pronostics réinitialisés.', 'success');
+    await loadAllData(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
   }
 }
-async function resetparcours() {
+async function resetmatchs() {
   try {
-    await supabase.from('parcours').delete().neq('data', 'impossible_value');
+    await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
 
-    state = { participants: {}, matchs: {}, pronostics: {}, parcours: [], resultats: {} };
+    state.matchs = [];
     ls_save();
     
-    toast('Données réinitialisées.', 'success');
-    location.reload(); 
+    toast('Matchs réinitialisés.', 'success');
+    await loadAllData(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -964,12 +963,10 @@ async function resetparcours() {
 }
 async function resetusers() {
   try {
-    // On supprime tout sauf Kévin DROUHET
     await supabase.from('users').delete().neq('name', 'Kévin DROUHET');
 
-    // On ne recharge pas la page (on supprime location.reload())
     toast('Participants réinitialisés (sauf Kévin).', 'success');
-    await loadUsers(); // On recharge juste la liste des participants
+    await loadUsers();
     renderAdmin();
   } catch (err) {
     console.error(err);
