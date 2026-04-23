@@ -205,6 +205,7 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
 .btn-danger{background:var(--red-bg);color:var(--red);border-color:#F5BABA}
 .btn-danger:hover{background:#FBD5D5}
 .btn-sm{padding:6px 13px;font-size:11px;border-radius:8px}
+.rbtn.disabled {opacity: 0.5;cursor: not-allowed;pointer-events: none;}
 
 /* ─── EMPTY ─── */
 .empty{text-align:center;padding:4rem 1rem;color:var(--mid)}
@@ -568,44 +569,48 @@ function renderPronostics(){
   document.getElementById('hero-rank').textContent=state.participants.length>1?`${myRank}e sur ${state.participants.length} participants`:'';
 
   const el=document.getElementById('pronostics-list');
-  const open=state.matchs.filter(m=>!m.closed);
   
-  if(!state.matchs.length){el.innerHTML='<div class="empty"><span class="emo">⚽</span><p>Aucun match configuré.</p></div>';return;}
-  if(!open.length){el.innerHTML='<div class="empty"><span class="emo">🔒</span><p>Tous les matchs sont fermés.</p></div>';return;}
+  if(!state.matchs.length){
+    el.innerHTML='<div class="empty"><span class="emo">⚽</span><p>Aucun match configuré.</p></div>';
+    return;
+  }
 
   let html='';
-  open.forEach(m => {
+  // On parcourt tous les matchs au lieu de filtrer uniquement les ouverts
+  state.matchs.forEach(m => {
     const p = (state.pronostics[me] || {})[m.id] || {};
     const sA = p.scoreA !== undefined ? p.scoreA : '';
     const sB = p.scoreB !== undefined ? p.scoreB : '';
     const r = p.result || '';
+    
+    // On vérifie si le match est fermé
+    const isClosed = m.closed;
 
-    html += `<div class="match-card open">
+    html += `<div class="match-card ${isClosed ? 'closed' : 'open'}">
       <div class="match-meta">
         <span class="match-date-str">${m.date||''}${m.time?' · '+m.time:''}</span>
-        <span class="badge badge-open">Ouvert</span>
+        <span class="badge ${isClosed ? 'badge-closed' : 'badge-open'}">${isClosed ? 'Fermé' : 'Ouvert'}</span>
       </div>
       <div class="teams-row">
         <span class="team-name">${m.teamA}</span>
         <div class="score-pair">
-          <input class="score-input" type="number" id="sA-${m.id}" value="${sA}" placeholder="–" />
+          <input class="score-input" type="number" id="sA-${m.id}" value="${sA}" placeholder="–" ${isClosed ? 'disabled' : ''} />
           <span class="score-sep">–</span>
-          <input class="score-input" type="number" id="sB-${m.id}" value="${sB}" placeholder="–" />
+          <input class="score-input" type="number" id="sB-${m.id}" value="${sB}" placeholder="–" ${isClosed ? 'disabled' : ''} />
         </div>
         <span class="team-name right">${m.teamB}</span>
       </div>
       <div class="result-btns">
-        <button class="rbtn ${r==='1'?'picked':''}" onclick="selectResultUI('${m.id}','1',this)">${m.teamA} gagne</button>
-        <button class="rbtn ${r==='N'?'picked':''}" onclick="selectResultUI('${m.id}','N',this)">Match nul</button>
-        <button class="rbtn ${r==='2'?'picked':''}" onclick="selectResultUI('${m.id}','2',this)">${m.teamB} gagne</button>
+        <button class="rbtn ${r==='1'?'picked':''} ${isClosed ? 'disabled' : ''}" onclick="${isClosed ? '' : `selectResultUI('${m.id}','1',this)`}">${m.teamA} gagne</button>
+        <button class="rbtn ${r==='N'?'picked':''} ${isClosed ? 'disabled' : ''}" onclick="${isClosed ? '' : `selectResultUI('${m.id}','N',this)`}">Match nul</button>
+        <button class="rbtn ${r==='2'?'picked':''} ${isClosed ? 'disabled' : ''}" onclick="${isClosed ? '' : `selectResultUI('${m.id}','2',this)`}">${m.teamB} gagne</button>
       </div>
-      <button class="btn btn-orange" style="width:100%; margin-top:10px" onclick="savePronoManual('${m.id}')">Valider ce pronostic</button>
+      ${!isClosed ? `<button class="btn btn-orange" style="width:100%; margin-top:10px" onclick="savePronoManual('${m.id}')">Valider ce pronostic</button>` : ''}
     </div>`;
   });
   
   el.innerHTML = html;
 }
-
 const _debounce={};
 function selectResultUI(mid, result, btn) {
   btn.closest('.result-btns').querySelectorAll('.rbtn').forEach(b => b.classList.remove('picked'));
