@@ -576,10 +576,18 @@ function renderPronostics(){
   }
 
   const sortedMatchs = [...state.matchs].sort((a, b) => {
-  const dateA = a.date ? new Date(a.date.split('/').reverse().join('-')) : new Date(0);
-  const dateB = b.date ? new Date(b.date.split('/').reverse().join('-')) : new Date(0);
-  
-  return dateB - dateA;
+    if (a.closed !== b.closed) {
+      return a.closed ? 1 : -1;
+    }
+
+    const dateA = a.date ? new Date(a.date.split('/').reverse().join('-')) : new Date(0);
+    const dateB = b.date ? new Date(b.date.split('/').reverse().join('-')) : new Date(0);
+
+    if (!a.closed) {
+      return dateB - dateA;
+    } else {
+      return dateA - dateB;
+    }
   });
 
   let html = '';
