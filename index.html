@@ -495,7 +495,6 @@ async function savePseudo(){
   me = v;
   u_save(v);
 
-  // enregistrement Supabase
   await supabase.from('users').upsert({
     name: v
   }, { onConflict: 'name' });
@@ -1103,7 +1102,9 @@ async function loadPronostics(){
 }
 supabase
   .channel('global-sync')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'matchs' }, () => { loadAllData(); })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'matchs' }, () => { 
+      loadAllData().then(() => { renderMatchs(); renderClassement(); }); 
+  })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'resultats' }, () => { 
       loadResultats().then(() => { renderMatchs(); renderClassement(); }); 
   })
@@ -1111,11 +1112,10 @@ supabase
       loadPronostics().then(() => { renderPronostics(); renderClassement(); }); 
   })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => { 
-      loadUsers().then(() => renderAdmin()); 
+      loadUsers().then(() => { renderAdmin(); renderClassement(); }); 
   })
   .on('broadcast', { event: 'force-reload' }, (payload) => {
       if (me !== 'Kévin DROUET') {
-          console.log("Réinitialisation reçue :", payload.payload.message);
           location.reload();
       }
   })
