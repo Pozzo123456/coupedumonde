@@ -785,6 +785,10 @@ function renderClassement(){
    ADMIN
    ============================================================ */
 function renderAdmin(){
+  if (!state || !state.participants) {
+    document.getElementById('admin-participants').innerHTML = '<p>Chargement des données...</p>';
+    return;
+  }
   document.getElementById('part-count').textContent=state.participants.length;
   document.getElementById('admin-participants').innerHTML=state.participants.length
     ?state.participants.map(p=>`<span class="chip">${initials(p)} ${p}</span>`).join('')
