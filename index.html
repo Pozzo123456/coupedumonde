@@ -391,9 +391,11 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
       <p style="font-size:13px;color:var(--mid);margin-bottom:12px;font-weight:500">Ces actions suppriment toutes les données de manière irréversible.</p>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetAll()">Réinitialiser toutes les données</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetmatchs()">Réinitialiser tous les matchs</button>
-      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetprono()">Réinitialiser tous les pronostics</button>
+      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetresultats()">Réinitialiser tous les résultats</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetusers()">Réinitialiser tous les participant</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetparcours()">Réinitialiser tous les parcours</button>
+      resetparcours
+resetusers
     </div>
   </div>
 
@@ -920,34 +922,19 @@ async function loadResultats() {
     });
   }
 }
-async function resetparcours() {
+async function resetAll() {
   try {
-    await supabase.from('parcours').delete().neq('user_name', 'impossible_value');
+    await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
+    await supabase.from('users').delete().neq('name', 'Kévin DROUET');
+    await supabase.from('parcours').delete().neq('users_name', 'impossible_value');
+    await supabase.from('resultats').delete().neq('scoreA', 'impossible_value');
+    await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
 
-    state.pronostics = {};
-    state.parcours = {};
-    state.resultats = {};
-    state.matchs = [];
+    state = { participants: [], matchs: [], pronostics: {}, parcours: {}, resultats: {} };
     ls_save();
     
-    toast('Parcours réinitialisés.', 'success');
-  } catch (err) {
-    console.error(err);
-    toast('Erreur lors de la suppression.', 'error');
-  }
-}
-async function resetprono() {
-  try {
-    await supabase.from('pronostics').delete().neq('user_name', 'impossible_value');
-
-    state.pronostics = {};
-    state.parcours = {};
-    state.resultats = {};
-    state.matchs = [];
-    ls_save();
-    
-    toast('Pronostics réinitialisés.', 'success');
-    await loadAllData(); 
+    toast('Données réinitialisées.', 'success');
+    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -955,16 +942,41 @@ async function resetprono() {
 }
 async function resetmatchs() {
   try {
-    await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
+    await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
 
-    state.pronostics = {};
-    state.parcours = {};
-    state.resultats = {};
-    state.matchs = [];
+    state = {matchs: []};
     ls_save();
     
-    toast('Matchs réinitialisés.', 'success');
-    await loadAllData(); 
+    toast('Données réinitialisées.', 'success');
+    location.reload(); 
+  } catch (err) {
+    console.error(err);
+    toast('Erreur lors de la suppression.', 'error');
+  }
+}
+async function resetresultats() {
+  try {
+    await supabase.from('resultats').delete().neq('scoreA', 'impossible_value');
+
+    state = {resultats: {} };
+    ls_save();
+    
+    toast('Données réinitialisées.', 'success');
+    location.reload(); 
+  } catch (err) {
+    console.error(err);
+    toast('Erreur lors de la suppression.', 'error');
+  }
+}
+async function resetparcours() {
+  try {
+    await supabase.from('parcours').delete().neq('users_name', 'impossible_value');
+
+    state = {parcours: {}};
+    ls_save();
+    
+    toast('Données réinitialisées.', 'success');
+    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -972,46 +984,19 @@ async function resetmatchs() {
 }
 async function resetusers() {
   try {
-    await supabase.from('users').delete().neq('name', 'Kévin DROUHET');
+    await supabase.from('users').delete().neq('name', 'Kévin DROUET');
 
-    state.pronostics = {};
-    state.parcours = {};
-    state.resultats = {};
-    state.matchs = [];
-    ls_save();
-
-    toast('Participants réinitialisés.', 'success');
-    await loadUsers();
-    renderAdmin();
-  } catch (err) {
-    console.error(err);
-    toast('Erreur lors de la suppression.', 'error');
-  }
-}
-
-async function resetAll() {
-  try {
-    await supabase.from('pronostics').delete().neq('user_name', 'Kévin DROUHET');
-    await supabase.from('parcours').delete().neq('user_name', 'impossible_value');
-    await supabase.from('resultats').delete().neq('match_id', 'impossible_value');
-    await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
-   
-    state.pronostics = {};
-    state.parcours = {};
-    state.resultats = {};
-    state.matchs = [];
+    state = { participants: []};
     ls_save();
     
     toast('Données réinitialisées.', 'success');
-    renderPronostics();
-    renderMatchs();
-    renderParcours();
-    renderClassement();
+    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
   }
 }
+
 
 /* ============================================================
    INIT
@@ -1064,11 +1049,6 @@ supabase
   })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
     loadUsers().then(() => renderAdmin());
-  })
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'parcours' }, () => {
-    loadParcours().then(() => {
-        renderParcours();
-    });
   })
   .subscribe();
   async function loadParcours() {
