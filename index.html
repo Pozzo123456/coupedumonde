@@ -559,49 +559,57 @@ function computeScore(user){
    PRONOSTICS
    ============================================================ */
 function renderPronostics(){
-  open.filter(m=>m.phase===phase).forEach(m=>{
-  const p=(state.pronostics[me]||{})[m.id]||{};
-  const sA=p.scoreA!==undefined&&p.scoreA!==null?p.scoreA:'';
-  const sB=p.scoreB!==undefined&&p.scoreB!==null?p.scoreB:'';
-  const r=p.result||'';
-  
-  html+=`<div class="match-card open" id="card-${m.id}">
-    <div class="match-meta">
-      <span class="match-date-str">${m.date||''}${m.time?' · '+m.time:''}</span>
-      <span class="badge badge-open">Ouvert</span>
+  const sc=computeScore(me);
+  document.getElementById('hero-pts').textContent=sc.pts;
+  const scores=state.participants.map(u=>computeScore(u).pts).sort((a,b)=>b-a);
+  const myRank=scores.indexOf(sc.pts)+1;
+  document.getElementById('hero-rank').textContent=state.participants.length>1?`${myRank}e sur ${state.participants.length} participants`:'';
+
+  const el=document.getElementById('pronostics-list');
+  const open=state.matchs.filter(m=>!m.closed);
+  if(!state.matchs.length){el.innerHTML='<div class="empty"><span class="emo">⚽</span><p>Aucun match configuré. L\'administrateur doit d\'abord ajouter les matchs.</p></div>';return;}
+  if(!open.length){el.innerHTML='<div class="empty"><span class="emo">🔒</span><p>Tous les matchs sont fermés. Consultez le classement !</p></div>';return;}
+
+  let html='';
+  const phases=[...new Set(open.map(m=>m.phase))];
+  phases.forEach(phase=>{
+    html += `<div class="match-card open">
+  <div class="match-meta">
+    <span class="match-date-str">${m.date||''}${m.time?' · '+m.time:''}</span>
+    <span class="badge badge-open">Ouvert</span>
+  </div>
+  <div class="teams-row">
+    <span class="team-name">${m.teamA}</span>
+    <div class="score-pair">
+      <input class="score-input" type="number" id="sA-${m.id}" value="${sA}" placeholder="–" />
+      <span class="score-sep">–</span>
+      <input class="score-input" type="number" id="sB-${m.id}" value="${sB}" placeholder="–" />
     </div>
-    <div class="teams-row">
-      <span class="team-name">${m.teamA}</span>
-      <div class="score-pair">
-        <input class="score-input" type="number" id="sA-${m.id}" value="${sA}" placeholder="–"/>
-        <span class="score-sep">–</span>
-        <input class="score-input" type="number" id="sB-${m.id}" value="${sB}" placeholder="–"/>
-      </div>
-      <span class="team-name right">${m.teamB}</span>
-    </div>
-    <div class="result-btns">
-      <button class="rbtn ${r==='1'?'picked':''}" onclick="selectResult('${m.id}','1',this)">${m.teamA} gagne</button>
-      <button class="rbtn ${r==='N'?'picked':''}" onclick="selectResult('${m.id}','N',this)">Match nul</button>
-      <button class="rbtn ${r==='2'?'picked':''}" onclick="selectResult('${m.id}','2',this)">${m.teamB} gagne</button>
-    </div>
-    <button class="btn btn-orange" style="width:100%;margin-top:10px" onclick="validateProno('${m.id}')">Valider mon pronostic</button>
-  </div>`;
-});
-}
+    <span class="team-name right">${m.teamB}</span>
+  </div>
+  <div class="result-btns">
+    <button class="rbtn ${r==='1'?'picked':''}" onclick="selectResultUI('${m.id}','1',this)">1</button>
+    <button class="rbtn ${r==='N'?'picked':''}" onclick="selectResultUI('${m.id}','N',this)">N</button>
+    <button class="rbtn ${r==='2'?'picked':''}" onclick="selectResultUI('${m.id}','2',this)">2</button>
+  </div>
+  <button class="btn btn-orange" style="width:100%; margin-top:10px" onclick="savePronoManual('${m.id}')">Valider ce pronostic</button>
+</div>`;
+    });
+  };
+  el.innerHTML=html;
+
 
 const _debounce={};
-let tempResults = {}; 
-
-function selectResult(mid, result, btn) {
-  tempResults[mid] = result;
-  btn.parentElement.querySelectorAll('.rbtn').forEach(b=>b.classList.remove('picked'));
+function selectResultUI(mid, result, btn) {
+  btn.closest('.result-btns').querySelectorAll('.rbtn').forEach(b => b.classList.remove('picked'));
   btn.classList.add('picked');
+  window.tempSelection = window.tempSelection || {};
+  window.tempSelection[mid] = result;
 }
-
-async function validateProno(mid) {
+async function savePronoManual(mid) {
   const scoreA = document.getElementById(`sA-${mid}`).value;
   const scoreB = document.getElementById(`sB-${mid}`).value;
-  const result = tempResults[mid] || (state.pronostics[me] && state.pronostics[me][mid]?.result);
+  const result = window.tempSelection ? window.tempSelection[mid] : null;
 
   if (scoreA === '' || scoreB === '') {
     toast('Veuillez remplir les scores', 'error');
@@ -619,14 +627,46 @@ async function validateProno(mid) {
     }, { onConflict: 'user_name, match_id' });
 
   if (error) {
-    toast("Erreur lors de l'enregistrement", "error");
+    toast("Erreur de sauvegarde", "error");
   } else {
-    // Mettre à jour l'état local
-    if (!state.pronostics[me]) state.pronostics[me] = {};
-    state.pronostics[me][mid] = { scoreA: parseInt(scoreA), scoreB: parseInt(scoreB), result };
-    ls_save();
-    toast("Pronostic validé avec succès !");
+    toast("Pronostic validé !");
   }
+}
+async function saveProno(mid, field, val) {
+  if (!me) return;
+
+  state.pronostics[me] = state.pronostics[me] || {};
+  state.pronostics[me][mid] = state.pronostics[me][mid] || { scoreA: null, scoreB: null, result: null };
+  state.pronostics[me][mid][field] = val === '' ? null : parseInt(val);
+  
+  const p = state.pronostics[me][mid];
+
+  const { error } = await supabase
+    .from('pronostics')
+    .upsert({
+      user_name: me,
+      match_id: mid,
+      scoreA: p.scoreA,
+      scoreB: p.scoreB,
+      result: p.result
+    }, { onConflict: 'user_name, match_id' });
+
+  if (error) {
+    console.error("Erreur:", error);
+    toast("Erreur sauvegarde", "error");
+  } else {
+    ls_save();
+    toast("Pronostic enregistré !");
+  }
+}
+function pickResult(mid,result,btn){
+  if(!state.pronostics[me]) state.pronostics[me]={};
+  if(!state.pronostics[me][mid]) state.pronostics[me][mid]={};
+  state.pronostics[me][mid].result=result;
+  ls_save();
+  btn.closest('.result-btns').querySelectorAll('.rbtn').forEach(b=>b.classList.remove('picked'));
+  btn.classList.add('picked');
+  toast('Pronostic enregistré !');
 }
 
 /* ============================================================
