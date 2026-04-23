@@ -567,37 +567,43 @@ function renderPronostics(){
 
   const el=document.getElementById('pronostics-list');
   const open=state.matchs.filter(m=>!m.closed);
-  if(!state.matchs.length){el.innerHTML='<div class="empty"><span class="emo">⚽</span><p>Aucun match configuré. L\'administrateur doit d\'abord ajouter les matchs.</p></div>';return;}
-  if(!open.length){el.innerHTML='<div class="empty"><span class="emo">🔒</span><p>Tous les matchs sont fermés. Consultez le classement !</p></div>';return;}
+  
+  if(!state.matchs.length){el.innerHTML='<div class="empty"><span class="emo">⚽</span><p>Aucun match configuré.</p></div>';return;}
+  if(!open.length){el.innerHTML='<div class="empty"><span class="emo">🔒</span><p>Tous les matchs sont fermés.</p></div>';return;}
 
   let html='';
-  const phases=[...new Set(open.map(m=>m.phase))];
-  phases.forEach(phase=>{
-    html += `<div class="match-card open">
-  <div class="match-meta">
-    <span class="match-date-str">${m.date||''}${m.time?' · '+m.time:''}</span>
-    <span class="badge badge-open">Ouvert</span>
-  </div>
-  <div class="teams-row">
-    <span class="team-name">${m.teamA}</span>
-    <div class="score-pair">
-      <input class="score-input" type="number" id="sA-${m.id}" value="${sA}" placeholder="–" />
-      <span class="score-sep">–</span>
-      <input class="score-input" type="number" id="sB-${m.id}" value="${sB}" placeholder="–" />
-    </div>
-    <span class="team-name right">${m.teamB}</span>
-  </div>
-  <div class="result-btns">
-    <button class="rbtn ${r==='1'?'picked':''}" onclick="selectResultUI('${m.id}','1',this)">1</button>
-    <button class="rbtn ${r==='N'?'picked':''}" onclick="selectResultUI('${m.id}','N',this)">N</button>
-    <button class="rbtn ${r==='2'?'picked':''}" onclick="selectResultUI('${m.id}','2',this)">2</button>
-  </div>
-  <button class="btn btn-orange" style="width:100%; margin-top:10px" onclick="savePronoManual('${m.id}')">Valider ce pronostic</button>
-</div>`;
-    });
-  };
-  el.innerHTML=html;
+  // On itère directement sur les matchs ouverts
+  open.forEach(m => {
+    const p = (state.pronostics[me] || {})[m.id] || {};
+    const sA = p.scoreA !== undefined ? p.scoreA : '';
+    const sB = p.scoreB !== undefined ? p.scoreB : '';
+    const r = p.result || '';
 
+    html += `<div class="match-card open">
+      <div class="match-meta">
+        <span class="match-date-str">${m.date||''}${m.time?' · '+m.time:''}</span>
+        <span class="badge badge-open">Ouvert</span>
+      </div>
+      <div class="teams-row">
+        <span class="team-name">${m.teamA}</span>
+        <div class="score-pair">
+          <input class="score-input" type="number" id="sA-${m.id}" value="${sA}" placeholder="–" />
+          <span class="score-sep">–</span>
+          <input class="score-input" type="number" id="sB-${m.id}" value="${sB}" placeholder="–" />
+        </div>
+        <span class="team-name right">${m.teamB}</span>
+      </div>
+      <div class="result-btns">
+        <button class="rbtn ${r==='1'?'picked':''}" onclick="selectResultUI('${m.id}','1',this)">1</button>
+        <button class="rbtn ${r==='N'?'picked':''}" onclick="selectResultUI('${m.id}','N',this)">N</button>
+        <button class="rbtn ${r==='2'?'picked':''}" onclick="selectResultUI('${m.id}','2',this)">2</button>
+      </div>
+      <button class="btn btn-orange" style="width:100%; margin-top:10px" onclick="savePronoManual('${m.id}')">Valider ce pronostic</button>
+    </div>`;
+  });
+  
+  el.innerHTML = html;
+}
 
 const _debounce={};
 function selectResultUI(mid, result, btn) {
