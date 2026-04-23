@@ -390,6 +390,7 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
       <h3>Zone danger</h3>
       <p style="font-size:13px;color:var(--mid);margin-bottom:12px;font-weight:500">Ces actions suppriment toutes les données de manière irréversible.</p>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetAll()">Réinitialiser toutes les données</button>
+      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetMatch()">Réinitialiser toutes les matchs</button>
     </div>
   </div>
 
@@ -968,6 +969,26 @@ async function resetAll() {
       payload: { message: 'Les données ont été réinitialisées par l\'admin.' }
     });
     
+
+    state = {
+      participants: [adminName],
+      matchs: [],
+      pronostics: {},
+      parcours: {},
+      resultats: {}
+    };
+
+    renderAdmin(); 
+    toast('Réinitialisation envoyée à tous les utilisateurs.', 'success');
+  } catch (err) {
+    console.error(err);
+  }
+}
+async function resetMatch() {
+  try {
+    const adminName = 'Kévin DROUET';
+    
+    await supabase.from('matchs').delete().not('id', 'is', null);    
 
     state = {
       participants: [adminName],
