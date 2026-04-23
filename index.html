@@ -927,6 +927,12 @@ async function resetAll() {
     await supabase.from('resultats').delete().not('match_id', 'is', null);
     await supabase.from('matchs').delete().not('id', 'is', null);
 
+    await supabase.channel('global-sync').send({
+      type: 'broadcast',
+      event: 'force-reload',
+      payload: { message: 'Les données ont été réinitialisées par l\'admin.' }
+    });
+
     state = {
       participants: [adminName],
       matchs: [],
@@ -935,16 +941,10 @@ async function resetAll() {
       resultats: {}
     };
 
-    ls_save();
-    
-    renderAdmin();
-    renderPronostics();
-    renderClassement();
-    
-    toast('Réinitialisation terminée. Vous êtes le seul participant restant.', 'success');
+    renderAdmin(); 
+    toast('Réinitialisation envoyée à tous les utilisateurs.', 'success');
   } catch (err) {
     console.error(err);
-    toast('Erreur lors de la suppression.', 'error');
   }
 }
 
