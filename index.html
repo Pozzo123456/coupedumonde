@@ -1065,6 +1065,11 @@ supabase
   .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
     loadUsers().then(() => renderAdmin());
   })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'parcours' }, () => {
+    loadParcours().then(() => {
+        renderParcours();
+    });
+  })
   .subscribe();
   async function loadParcours() {
   const { data, error } = await supabase.from('parcours').select('*');
