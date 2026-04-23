@@ -924,8 +924,15 @@ async function resetAll() {
     await supabase.from('resultats').delete().neq('scoreA', 'impossible_value');
     await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
 
-    state = { participants: [], matchs: [], pronostics: {}, parcours: {}, resultats: {} };
+    state.pronostics = { [me]: state.pronostics[me] || {} };
+    state.parcours = { [me]: state.parcours[me] || {} };
+    state.resultats = {};
+    state.matchs = [];
     ls_save();
+    renderAdmin();
+    renderPronostics();
+    renderClassement();
+    renderMatchs();
     
     toast('Données réinitialisées.', 'success');
   } catch (err) {
