@@ -393,7 +393,6 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetMatch()">Réinitialiser toutes les matchs</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetUsers()">Réinitialiser toutes les participant</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetProno()">Réinitialiser toutes les pronostic</button>
-      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetParcours()">Réinitialiser toutes les parcours</button>
     </div>
   </div>
 
@@ -1006,26 +1005,6 @@ async function resetMatch() {
     console.error(err);
   }
 }
-async function resetParcours() {
-  try {
-    const adminName = 'Kévin DROUET';
-    
-    await supabase.from('parcours').delete().not('user_name', 'is', null);   
-
-    state = {
-      participants: [adminName],
-      matchs: [],
-      pronostics: {},
-      parcours: {},
-      resultats: {}
-    };
-
-    renderAdmin(); 
-    toast('Réinitialisation envoyée à tous les utilisateurs.', 'success');
-  } catch (err) {
-    console.error(err);
-  }
-}
 async function resetUsers() {
   try {
     const adminName = 'Kévin DROUET';
@@ -1113,17 +1092,6 @@ supabase
   })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'resultats' }, () => { 
       loadResultats().then(() => { renderMatchs(); renderClassement(); }); 
-  })
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'parcours' }, async () => {
-      await loadParcours();
-      
-      if (document.getElementById('section-parcours').classList.contains('visible')) {
-          renderParcours();
-      }
-      
-      if (document.getElementById('section-admin').classList.contains('visible')) {
-          renderAdmin();
-      }
   })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics' }, () => { 
       loadPronostics().then(() => { renderPronostics(); renderClassement(); }); 
