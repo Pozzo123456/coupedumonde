@@ -575,15 +575,17 @@ function renderPronostics(){
     return;
   }
 
-  let html='';
-  // On parcourt tous les matchs au lieu de filtrer uniquement les ouverts
-  state.matchs.forEach(m => {
+  const sortedMatchs = [...state.matchs].sort((a, b) => {
+    if (a.closed !== b.closed) return a.closed - b.closed;
+    return 0; 
+  });
+
+  let html = '';
+  sortedMatchs.forEach(m => {
     const p = (state.pronostics[me] || {})[m.id] || {};
     const sA = p.scoreA !== undefined ? p.scoreA : '';
     const sB = p.scoreB !== undefined ? p.scoreB : '';
     const r = p.result || '';
-    
-    // On vérifie si le match est fermé
     const isClosed = m.closed;
 
     html += `<div class="match-card ${isClosed ? 'closed' : 'open'}">
