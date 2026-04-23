@@ -1076,17 +1076,6 @@ supabase
     });
   }
 }
-const currentUser = localStorage.getItem('pozzo_wc2026_user');
-const isKevin = (currentUser === 'Kévin DROUET');
-
-if (!isKevin) {
-  supabase.channel('global-updates')
-    .on('broadcast', { event: 'refresh-page' }, () => {
-      console.log('Signal reçu, rafraîchissement forcé...');
-      location.reload();
-    })
-    .subscribe();
-}
 async function loadAllData() {
   await Promise.all([
     loadUsers(),
