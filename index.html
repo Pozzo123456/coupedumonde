@@ -983,9 +983,10 @@ async function resetAll() {
   try {
     const adminName = 'Kévin DROUET';
 
-    await supabase.from('pronostics').delete().not('user_name', 'eq', adminName);
+    
     await supabase.from('users').delete().not('name', 'eq', adminName);
 
+    await supabase.from('pronostics').delete().not('user_name', 'is', null);
     await supabase.from('parcours').delete().not('user_name', 'is', null);
     await supabase.from('resultats').delete().not('match_id', 'is', null);
     await supabase.from('matchs').delete().not('id', 'is', null);
