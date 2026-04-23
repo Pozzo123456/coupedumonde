@@ -483,9 +483,18 @@ function show(s){
    ============================================================ */
 function showPseudoModal(){
   document.getElementById('pseudo-overlay').classList.remove('hidden');
-  document.getElementById('cancel-pseudo-btn').style.display=me?'flex':'none';
-  document.getElementById('pseudo-input').value=me;
-  setTimeout(()=>document.getElementById('pseudo-input').focus(),150);
+  
+  const savedPseudo = u_load();
+  
+  document.getElementById('cancel-pseudo-btn').style.display = savedPseudo ? 'flex' : 'none';
+  
+  const inputEl = document.getElementById('pseudo-input');
+  inputEl.value = savedPseudo;
+  
+  setTimeout(() => {
+    inputEl.focus();
+    inputEl.select(); 
+  }, 150);
 }
 function hidePseudoModal(){document.getElementById('pseudo-overlay').classList.add('hidden');}
 async function savePseudo(){
