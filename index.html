@@ -957,7 +957,7 @@ async function resetresultats() {
   try {
     await supabase.from('resultats').delete().neq('scoreA', 'impossible_value');
 
-    state = {resultats: {} };
+    state = { participants: {}, matchs: {}, pronostics: {}, parcours: {}, resultats: [] };
     ls_save();
     
     toast('Données réinitialisées.', 'success');
@@ -971,7 +971,7 @@ async function resetprono() {
   try {
     await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
 
-    state = {pronostics: {}};
+    state = { participants: {}, matchs: {}, pronostics: [], parcours: {}, resultats: {} };
     ls_save();
     
     toast('Données réinitialisées.', 'success');
@@ -985,7 +985,7 @@ async function resetparcours() {
   try {
     await supabase.from('parcours').delete().neq('data', 'impossible_value');
 
-    state = {parcours: {}};
+    state = { participants: {}, matchs: {}, pronostics: {}, parcours: [], resultats: {} };
     ls_save();
     
     toast('Données réinitialisées.', 'success');
@@ -999,7 +999,7 @@ async function resetusers() {
   try {
     await supabase.from('users').delete().neq('name', 'impossible_value');
 
-    state = { participants: []};
+    state = { participants: [], matchs: {}, pronostics: {}, parcours: {}, resultats: {} };
     ls_save();
     
     toast('Données réinitialisées.', 'success');
