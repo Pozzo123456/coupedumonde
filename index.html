@@ -1037,7 +1037,7 @@ async function resetUsers() {
       event: 'force-reload',
       payload: { message: 'Les données ont été réinitialisées par l\'admin.' }
     });
-    
+
     state = {
       participants: [adminName],
       matchs: [],
@@ -1113,6 +1113,9 @@ supabase
   })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'resultats' }, () => { 
       loadResultats().then(() => { renderMatchs(); renderClassement(); }); 
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'parcours' }, () => { 
+      loadParcours().then(() => { renderParcours(); }); 
   })
   .on('postgres_changes', { event: '*', schema: 'public', table: 'pronostics' }, () => { 
       loadPronostics().then(() => { renderPronostics(); renderClassement(); }); 
