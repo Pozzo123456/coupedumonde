@@ -1174,12 +1174,14 @@ async function loadMatchs(){
     document.getElementById('user-label').textContent = me;
     document.getElementById('user-avatar').textContent = initials(me);
     document.getElementById('user-btn').style.display='flex';
+    
+    showPseudoModal(); 
   } else {
     showPseudoModal();
   }
 
   await loadAllData();
-})();;
+})();
 </script>
 </body>
 </html>
