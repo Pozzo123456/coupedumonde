@@ -1032,6 +1032,12 @@ async function resetUsers() {
     
     await supabase.from('users').delete().not('name', 'eq', adminName);   
 
+    await supabase.channel('global-sync').send({
+      type: 'broadcast',
+      event: 'force-reload',
+      payload: { message: 'Les données ont été réinitialisées par l\'admin.' }
+    });
+    
     state = {
       participants: [adminName],
       matchs: [],
