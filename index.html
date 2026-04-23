@@ -392,8 +392,7 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetAll()">Réinitialiser toutes les données</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetmatchs()">Réinitialiser tous les matchs</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetresultats()">Réinitialiser tous les résultats</button>
-      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetusers()">Réinitialiser tous les participant</button>
-      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetparcours()">Réinitialiser tous les parcours</button>
+      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetprono()">Réinitialiser tous les pronostics</button>
     </div>
   </div>
 
@@ -405,23 +404,12 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
    ============================================================ */
 if (typeof window.supabaseClient === 'undefined') {
     window.supabaseClient = window.supabase.createClient(
-        "https://yqmasqehbmpkygiganyq.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxbWFzcWVoYm1wa3lnaWdhbnlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTM3NDQsImV4cCI6MjA5MjMyOTc0NH0.LRgRzB733rnHmhv3PieGK49dCga9TqdWnWXyrjg3rsk"
+      "https://yqmasqehbmpkygiganyq.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxbWFzcWVoYm1wa3lnaWdhbnlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTM3NDQsImV4cCI6MjA5MjMyOTc0NH0.LRgRzB733rnHmhv3PieGK49dCga9TqdWnWXyrjg3rsk"
     );
 }
 var supabase = window.supabaseClient;
-const currentUser = localStorage.getItem('pozzo_wc2026_user');
-const isKevin = (currentUser === 'Kévin DROUET');
-
-if (!isKevin) {
-    supabase.channel('global-updates')
-        .on('broadcast', { event: 'refresh-page' }, () => {
-            location.reload();
-        })
-        .subscribe();
-}
-
-const ADMIN_PASSWORD = 'pozzo2026';
+const ADMIN_PASSWORD = 'pozzo2026'; // ← Modifiez ce mot de passe
 const STORAGE_KEY    = 'pozzo_wc2026_v1';
 const USER_KEY       = 'pozzo_wc2026_user';
 
@@ -506,6 +494,7 @@ async function savePseudo(){
   me = v;
   u_save(v);
 
+  // enregistrement Supabase
   await supabase.from('users').upsert({
     name: v
   }, { onConflict: 'name' });
@@ -785,10 +774,6 @@ function renderClassement(){
    ADMIN
    ============================================================ */
 function renderAdmin(){
-  if (!state || !state.participants) {
-    document.getElementById('admin-participants').innerHTML = '<p>Chargement des données...</p>';
-    return;
-  }
   document.getElementById('part-count').textContent=state.participants.length;
   document.getElementById('admin-participants').innerHTML=state.participants.length
     ?state.participants.map(p=>`<span class="chip">${initials(p)} ${p}</span>`).join('')
@@ -937,16 +922,10 @@ async function loadResultats() {
 async function resetAll() {
   try {
     await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
-    await supabase.from('users').delete().neq('name', 'Kévin DROUET');
+    await supabase.from('users').delete().neq('name', 'impossible_value');
     await supabase.from('parcours').delete().neq('users_name', 'impossible_value');
     await supabase.from('resultats').delete().neq('scoreA', 'impossible_value');
     await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
-
-    await supabase.channel('global-updates').send({
-      type: 'broadcast',
-      event: 'refresh-page',
-      payload: { message: 'reset' }
-    });
 
     state = { participants: [], matchs: [], pronostics: {}, parcours: {}, resultats: {} };
     ls_save();
@@ -966,6 +945,7 @@ async function resetmatchs() {
     ls_save();
     
     toast('Données réinitialisées.', 'success');
+    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -979,6 +959,21 @@ async function resetresultats() {
     ls_save();
     
     toast('Données réinitialisées.', 'success');
+    location.reload(); 
+  } catch (err) {
+    console.error(err);
+    toast('Erreur lors de la suppression.', 'error');
+  }
+}
+async function resetprono() {
+  try {
+    await supabase.from('pronostics').delete().neq('match_id', 'impossible_value');
+
+    state = {pronostics: {}};
+    ls_save();
+    
+    toast('Données réinitialisées.', 'success');
+    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -992,20 +987,15 @@ async function resetparcours() {
     ls_save();
     
     toast('Données réinitialisées.', 'success');
+    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
   }
 }
-async function resetusers() {
+async function resetAll() {
   try {
-    await supabase.from('users').delete().neq('name', 'Kévin DROUET');
-
-    await supabase.channel('global-updates').send({
-      type: 'broadcast',
-      event: 'refresh-page',
-      payload: { message: 'reset-users' }
-    });
+    await supabase.from('users').delete().neq('name', 'impossible_value');
 
     state = { participants: []};
     ls_save();
@@ -1110,18 +1100,7 @@ async function loadMatchs(){
 }
 (async ()=>{
   me = u_load();
-  var _user = u_load(); 
-  me = _user; 
-  var isKevin = (me === 'Kévin DROUET');
 
-  if (!isKevin) {
-    supabase.channel('global-updates')
-      .on('broadcast', { event: 'refresh-page' }, () => {
-        location.reload();
-      })
-      .subscribe();
-  }
-  
   if(me){
     document.getElementById('user-label').textContent = me;
     document.getElementById('user-avatar').textContent = initials(me);
@@ -1129,10 +1108,9 @@ async function loadMatchs(){
   } else {
     showPseudoModal();
   }
-  
-  await loadAllData();
-})();
 
+  await loadAllData();
+})();;
 </script>
 </body>
 </html>
