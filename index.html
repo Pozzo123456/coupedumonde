@@ -391,6 +391,9 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
       <p style="font-size:13px;color:var(--mid);margin-bottom:12px;font-weight:500">Ces actions suppriment toutes les données de manière irréversible.</p>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetAll()">Réinitialiser toutes les données</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetMatch()">Réinitialiser toutes les matchs</button>
+      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetUsers()">Réinitialiser toutes les participant</button>
+      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetProno()">Réinitialiser toutes les pronostic</button>
+      <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetParcours()">Réinitialiser toutes les parcours</button>
     </div>
   </div>
 
@@ -989,6 +992,66 @@ async function resetMatch() {
     const adminName = 'Kévin DROUET';
     
     await supabase.from('matchs').delete().not('id', 'is', null);    
+
+    state = {
+      participants: [adminName],
+      matchs: [],
+      pronostics: {},
+      parcours: {},
+      resultats: {}
+    };
+
+    renderAdmin(); 
+    toast('Réinitialisation envoyée à tous les utilisateurs.', 'success');
+  } catch (err) {
+    console.error(err);
+  }
+}
+async function resetParcours() {
+  try {
+    const adminName = 'Kévin DROUET';
+    
+    await supabase.from('parcours').delete().not('user_name', 'is', null);   
+
+    state = {
+      participants: [adminName],
+      matchs: [],
+      pronostics: {},
+      parcours: {},
+      resultats: {}
+    };
+
+    renderAdmin(); 
+    toast('Réinitialisation envoyée à tous les utilisateurs.', 'success');
+  } catch (err) {
+    console.error(err);
+  }
+}
+async function resetUsers() {
+  try {
+    const adminName = 'Kévin DROUET';
+    
+    await supabase.from('users').delete().not('name', 'eq', adminName);   
+
+    state = {
+      participants: [adminName],
+      matchs: [],
+      pronostics: {},
+      parcours: {},
+      resultats: {}
+    };
+
+    renderAdmin(); 
+    toast('Réinitialisation envoyée à tous les utilisateurs.', 'success');
+  } catch (err) {
+    console.error(err);
+  }
+}
+async function resetProno() {
+  try {
+    const adminName = 'Kévin DROUET';
+    
+    await supabase.from('pronostics').delete().not('user_name', 'eq', adminName);  
 
     state = {
       participants: [adminName],
