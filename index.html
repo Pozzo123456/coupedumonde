@@ -922,9 +922,12 @@ async function loadResultats() {
 }
 async function resetparcours() {
   try {
-    await supabase.from('parcours').delete().neq('user_name', me);
+    await supabase.from('parcours').delete().neq('user_name', 'impossible_value');
 
-    state.parcours = {}; 
+    state.pronostics = {};
+    state.parcours = {};
+    state.resultats = {};
+    state.matchs = [];
     ls_save();
     
     toast('Parcours réinitialisés.', 'success');
@@ -935,9 +938,12 @@ async function resetparcours() {
 }
 async function resetprono() {
   try {
-    await supabase.from('pronostics').delete().neq('user_name', me);
+    await supabase.from('pronostics').delete().neq('user_name', 'impossible_value');
 
     state.pronostics = {};
+    state.parcours = {};
+    state.resultats = {};
+    state.matchs = [];
     ls_save();
     
     toast('Pronostics réinitialisés.', 'success');
@@ -951,6 +957,9 @@ async function resetmatchs() {
   try {
     await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
 
+    state.pronostics = {};
+    state.parcours = {};
+    state.resultats = {};
     state.matchs = [];
     ls_save();
     
@@ -965,7 +974,13 @@ async function resetusers() {
   try {
     await supabase.from('users').delete().neq('name', 'Kévin DROUHET');
 
-    toast('Participants réinitialisés (sauf Kévin).', 'success');
+    state.pronostics = {};
+    state.parcours = {};
+    state.resultats = {};
+    state.matchs = [];
+    ls_save();
+
+    toast('Participants réinitialisés.', 'success');
     await loadUsers();
     renderAdmin();
   } catch (err) {
@@ -977,12 +992,21 @@ async function resetusers() {
 async function resetAll() {
   try {
     await supabase.from('pronostics').delete().neq('user_name', 'Kévin DROUHET');
-    await supabase.from('parcours').delete().neq('user_name', 'Kévin DROUHET');
+    await supabase.from('parcours').delete().neq('user_name', 'impossible_value');
     await supabase.from('resultats').delete().neq('match_id', 'impossible_value');
     await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
-
+   
+    state.pronostics = {};
+    state.parcours = {};
+    state.resultats = {};
+    state.matchs = [];
+    ls_save();
+    
     toast('Données réinitialisées.', 'success');
-    await loadAllData();
+    renderPronostics();
+    renderMatchs();
+    renderParcours();
+    renderClassement();
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
