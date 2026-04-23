@@ -403,12 +403,12 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
 /* ============================================================
    CONFIG
    ============================================================ */
-if (typeof window.supabaseClient === 'undefined') {
-    window.supabaseClient = window.supabase.createClient(
-      "https://yqmasqehbmpkygiganyq.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxbWFzcWVoYm1wa3lnaWdhbnlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTM3NDQsImV4cCI6MjA5MjMyOTc0NH0.LRgRzB733rnHmhv3PieGK49dCga9TqdWnWXyrjg3rsk"
-    );
-}
+const supabase = window.supabase.createClient(
+  "https://yqmasqehbmpkygiganyq.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxbWFzcWVoYm1wa3lnaWdhbnlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTM3NDQsImV4cCI6MjA5MjMyOTc0NH0.LRgRzB733rnHmhv3PieGK49dCga9TqdWnWXyrjg3rsk"
+);
+window.supabaseClient = supabase;
+
 const currentUser = localStorage.getItem('pozzo_wc2026_user');
 const isKevin = (currentUser === 'Kévin DROUET');
 
@@ -419,7 +419,6 @@ if (!isKevin) {
     })
     .subscribe();
 }
-var supabase = window.supabaseClient;
 const ADMIN_PASSWORD = 'pozzo2026'; // ← Modifiez ce mot de passe
 const STORAGE_KEY    = 'pozzo_wc2026_v1';
 const USER_KEY       = 'pozzo_wc2026_user';
@@ -1109,13 +1108,6 @@ async function loadMatchs(){
   me = _user; 
   var isKevin = (me === 'Kévin DROUET');
 
-  if(me){
-    document.getElementById('user-label').textContent = me;
-    document.getElementById('user-avatar').textContent = initials(me);
-    document.getElementById('user-btn').style.display='flex';
-  } else {
-    showPseudoModal();
-  }
   if (!isKevin) {
     supabase.channel('global-updates')
       .on('broadcast', { event: 'refresh-page' }, () => {
@@ -1124,6 +1116,14 @@ async function loadMatchs(){
       .subscribe();
   }
 
+  if(me){
+    document.getElementById('user-label').textContent = me;
+    document.getElementById('user-avatar').textContent = initials(me);
+    document.getElementById('user-btn').style.display='flex';
+  } else {
+    showPseudoModal();
+  }
+  
   await loadAllData();
 })();
 
