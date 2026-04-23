@@ -394,8 +394,6 @@ textarea.parc-input:focus,input.parc-input:focus{outline:none;border-color:var(-
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetresultats()">Réinitialiser tous les résultats</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetusers()">Réinitialiser tous les participant</button>
       <button class="btn btn-danger" onclick="if(confirm('⚠️ Supprimer TOUTES les données ?'))resetparcours()">Réinitialiser tous les parcours</button>
-      resetparcours
-resetusers
     </div>
   </div>
 
@@ -497,7 +495,6 @@ async function savePseudo(){
   me = v;
   u_save(v);
 
-  // enregistrement Supabase
   await supabase.from('users').upsert({
     name: v
   }, { onConflict: 'name' });
@@ -930,6 +927,12 @@ async function resetAll() {
     await supabase.from('resultats').delete().neq('scoreA', 'impossible_value');
     await supabase.from('matchs').delete().neq('teamA', 'impossible_value');
 
+    await supabase.channel('global-updates').send({
+      type: 'broadcast',
+      event: 'refresh-page',
+      payload: { message: 'reset' }
+    });
+
     state = { participants: [], matchs: [], pronostics: {}, parcours: {}, resultats: {} };
     ls_save();
     
@@ -948,7 +951,6 @@ async function resetmatchs() {
     ls_save();
     
     toast('Données réinitialisées.', 'success');
-    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -962,7 +964,6 @@ async function resetresultats() {
     ls_save();
     
     toast('Données réinitialisées.', 'success');
-    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -976,7 +977,6 @@ async function resetparcours() {
     ls_save();
     
     toast('Données réinitialisées.', 'success');
-    location.reload(); 
   } catch (err) {
     console.error(err);
     toast('Erreur lors de la suppression.', 'error');
@@ -985,6 +985,12 @@ async function resetparcours() {
 async function resetusers() {
   try {
     await supabase.from('users').delete().neq('name', 'Kévin DROUET');
+
+    await supabase.channel('global-updates').send({
+      type: 'broadcast',
+      event: 'refresh-page',
+      payload: { message: 'reset-users' }
+    });
 
     state = { participants: []};
     ls_save();
@@ -1059,6 +1065,17 @@ supabase
       state.parcours[p.user_name] = p.data;
     });
   }
+}
+const currentUser = localStorage.getItem('pozzo_wc2026_user');
+const isKevin = (currentUser === 'Kévin DROUET');
+
+if (!isKevin) {
+  supabase.channel('global-updates')
+    .on('broadcast', { event: 'refresh-page' }, () => {
+      console.log('Signal reçu, rafraîchissement forcé...');
+      location.reload();
+    })
+    .subscribe();
 }
 async function loadAllData() {
   await Promise.all([
