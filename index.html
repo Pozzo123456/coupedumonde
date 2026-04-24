@@ -547,8 +547,10 @@ function lockAdmin(){
 }
 function updateAdminVisibility() {
   const adminBtn = document.getElementById('nav-admin');
+  if (!adminBtn) return;
+
   if (me === 'Kévin DROUET') {
-    adminBtn.style.display = 'block';
+    adminBtn.style.setProperty('display', 'block', 'important');
   } else {
     adminBtn.style.display = 'none';
   }
@@ -1192,6 +1194,8 @@ async function loadMatchs(){
   }
 
   await loadAllData();
+  
+  updateAdminVisibility();
 })();
 </script>
 </body>
