@@ -508,14 +508,16 @@ async function savePseudo(){
     name: v
   }, { onConflict: 'name' });
 
-  document.getElementById('user-label').textContent = v;
-  document.getElementById('user-avatar').textContent = initials(v);
-  document.getElementById('user-btn').style.display='flex';
-
   hidePseudoModal();
   await loadAllData();
+
+  updateAdminVisibility();
 }
 function initials(s){return s?s.slice(0,2).toUpperCase():'?';}
+function logout() {
+  localStorage.removeItem(USER_KEY); // Supprime le pseudo stocké
+  location.reload(); // Recharge la page proprement
+}
 
 /* ============================================================
    ADMIN LOCK
@@ -548,9 +550,11 @@ function lockAdmin(){
 function updateAdminVisibility() {
   const adminBtn = document.getElementById('nav-admin');
   if (!adminBtn) return;
-
-  if (me === 'Kévin DROUET') {
-    adminBtn.style.setProperty('display', 'block', 'important');
+  
+  const currentMe = u_load();
+  
+  if (currentMe === 'Kévin DROUET') {
+    adminBtn.style.display = 'block';
   } else {
     adminBtn.style.display = 'none';
   }
